@@ -18,10 +18,10 @@ public class LinkedListDeque<T> {
     private int size;
 
     public LinkedListDeque() {
-        Node sentinel = new Node(null, null, null);
+        sentinel = new Node(null, null, null);
         sentinel.pre = sentinel;
         sentinel.next = sentinel;
         size = 0;
     }
-    
+
 }
