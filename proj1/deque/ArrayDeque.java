@@ -37,9 +37,20 @@ public class ArrayDeque<T> {
     }
 
     public T get(int index) {
+        if (index < 0 || index > this.size()) {
+            return null;
+        }
+
         int actualIndex = (nextFirst + 1 + index) % items.length;
         return items[actualIndex];
     }
 
-    
+    public int size() {
+        return size;
+    }
+
+    public Boolean isEmpty() {
+        return this.size() == 0;
+    }
+
 }
