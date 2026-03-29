@@ -23,4 +23,23 @@ public class ArrayDeque<T> {
         nextLast = (nextLast + 1) % items.length;
         return nextLast;
     }
+
+    public void addFirst(T item) {
+        items[nextFirst] = item;
+        nextFirst = oneMinus(nextFirst);
+        size++;
+    }
+
+    public void addLast(T item) {
+        items[nextLast] = item;
+        nextLast = onePlus(nextLast);
+        size++;
+    }
+
+    public T get(int index) {
+        int actualIndex = (nextFirst + 1 + index) % items.length;
+        return items[actualIndex];
+    }
+
+    
 }
