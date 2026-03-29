@@ -120,7 +120,7 @@ public class LinkedListDeque<T> {
         if (index < 0 || index >= this.size()) {
             return null;
         }
-        
+
         Node p = sentinel.next;
         return getRecursiveHelp(p, index);
     }
