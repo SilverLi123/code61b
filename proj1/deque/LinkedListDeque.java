@@ -102,14 +102,14 @@ public class LinkedListDeque<T> {
     }
 
     public T get(int index) {
-        if (index >= this.size()) {
+        if (index < 0 || index >= this.size()) {
             return null;
         }
 
         int curr = 0;
         Node p = sentinel.next;
 
-        while(curr <= index) {
+        while(curr < index) {
             curr++;
             p = p.next;
         }

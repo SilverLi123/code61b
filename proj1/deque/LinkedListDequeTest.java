@@ -120,4 +120,18 @@ public class LinkedListDequeTest {
         }
 
     }
+
+    @Test
+    public void getItemTest() {
+
+        LinkedListDeque<Integer> lld1 = new LinkedListDeque<>();
+
+        for (int i = 0; i < 6; i++) {
+            lld1.addLast(i);
+        }
+
+        for (int i = 0; i < 6; i++) {
+            assertEquals("Should have the same value", i, (int) lld1.get(i));
+        }
+    }
 }
