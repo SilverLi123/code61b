@@ -61,4 +61,38 @@ public class LinkedListDeque<T> {
         System.out.println();
     }
 
+    public T removeFirst() {
+        if (this.isEmpty()) {
+            return null;
+        }
+
+        Node firstNode = sentinel.next;
+        T item = firstNode.item;
+
+        firstNode.next.prev = sentinel;
+        sentinel.next = firstNode.next;
+
+        firstNode.item = null;
+        firstNode.next = null;
+        firstNode.prev = null;
+
+        return item;
+    }
+
+    public T removeLast() {
+        Node lastNode = sentinel.prev;
+        T item = lastNode.item;
+
+        lastNode.prev.next = sentinel;
+        sentinel.prev = lastNode.prev;
+
+        lastNode.item = null;
+        lastNode.prev = null;
+        lastNode.next = null;
+
+        return item;
+    }
+
+    
+
 }
