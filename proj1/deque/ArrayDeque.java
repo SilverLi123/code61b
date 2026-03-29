@@ -53,4 +53,33 @@ public class ArrayDeque<T> {
         return this.size() == 0;
     }
 
+    public T removeFirst() {
+        nextFirst = onePlus(nextFirst);
+        T removed = items[nextFirst];
+
+        items[nextFirst] = null;
+        size--;
+
+        return removed;
+    }
+
+    public T removeLast() {
+        nextLast = oneMinus(nextLast);
+        T removed = items[nextLast];
+
+        items[nextLast] = null;
+        size--;
+
+        return removed;
+    }
+
+    public void printDeque() {
+        int actualIndex0 = (nextFirst + 1) % items.length;
+
+        for (int i = actualIndex0; i < actualIndex0 + size; i++) {
+            System.out.print(items[i] + " ");
+        }
+        System.out.println();
+    }
+
 }
