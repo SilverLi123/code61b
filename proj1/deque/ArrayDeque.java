@@ -14,14 +14,14 @@ public class ArrayDeque<T> {
         nextLast = 4;
     }
 
-    private int oneMinus(int nextFirst) {
-        nextFirst = (nextFirst - 1 + items.length) % items.length;
-        return nextFirst;
+    private int oneMinus(int index) {
+        index = (index - 1 + items.length) % items.length;
+        return index;
     }
 
-    private int onePlus(int nextLast) {
-        nextLast = (nextLast + 1) % items.length;
-        return nextLast;
+    private int onePlus(int index) {
+        index = (index + 1) % items.length;
+        return index;
     }
 
     public void addFirst(T item) {
