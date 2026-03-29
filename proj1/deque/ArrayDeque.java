@@ -7,7 +7,7 @@ public class ArrayDeque<T> {
     private int nextLast;
     private static int INITIAL_CAPACITY = 8;
 
-    public void ArrayDeque() {
+    public ArrayDeque() {
         items = (T[]) new Object[INITIAL_CAPACITY];
         size = 0;
         nextFirst = 3;
@@ -54,6 +54,9 @@ public class ArrayDeque<T> {
     }
 
     public T removeFirst() {
+        if (isEmpty()) {
+            return null;
+        }
         nextFirst = onePlus(nextFirst);
         T removed = items[nextFirst];
 
@@ -64,6 +67,9 @@ public class ArrayDeque<T> {
     }
 
     public T removeLast() {
+        if (isEmpty()) {
+            return null;
+        }
         nextLast = oneMinus(nextLast);
         T removed = items[nextLast];
 
@@ -74,10 +80,8 @@ public class ArrayDeque<T> {
     }
 
     public void printDeque() {
-        int actualIndex0 = (nextFirst + 1) % items.length;
-
-        for (int i = actualIndex0; i < actualIndex0 + size; i++) {
-            System.out.print(items[i] + " ");
+        for (int i = 0; i < size; i++) {
+            System.out.print(get(i) + " ");
         }
         System.out.println();
     }
