@@ -86,4 +86,20 @@ public class ArrayDequeTest {
         System.out.print("Actual:   ");
         dq.printDeque();
     }
+
+    @Test
+    public void testIteratorBasic() {
+        LinkedListDeque<Integer> d = new LinkedListDeque<>();
+        d.addLast(1);
+        d.addLast(2);
+        d.addLast(3);
+
+        int[] expected = {1, 2, 3};
+        int i = 0;
+
+        for (int x : d) {
+            assertEquals(expected[i], x);
+            i++;
+        }
+    }
 }

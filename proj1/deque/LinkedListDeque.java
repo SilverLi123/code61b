@@ -1,8 +1,9 @@
 package deque;
 
 import net.sf.saxon.functions.ConstantFunction;
+import java.util.Iterator;
 
-public class LinkedListDeque<T> {
+public class LinkedListDeque<T> implements Iterable<T> {
 
     private class Node {
         T item;
@@ -54,7 +55,7 @@ public class LinkedListDeque<T> {
 
     public void printDeque() {
         Node p = sentinel.next;
-        while (p.next != sentinel) {
+        while (p != sentinel) {
             System.out.print(p.item + " ");
             p = p.next;
         }
@@ -131,5 +132,31 @@ public class LinkedListDeque<T> {
         }
         return getRecursiveHelp(p.next, index - 1);
     }
+
+    @Override
+    public Iterator<T> iterator() {
+        return new LinkListDequeIterator();
+    }
+
+    private class LinkListDequeIterator implements Iterator<T> {
+        private Node current;
+
+        public LinkListDequeIterator() {
+            current = sentinel.next;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return current.next != sentinel;
+        }
+
+        @Override
+        public T next() {
+            T item = current.item;
+            current = current.next;
+            return item;
+        }
+    }
+
 
 }
