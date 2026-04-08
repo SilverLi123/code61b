@@ -102,4 +102,75 @@ public class ArrayDequeTest {
             i++;
         }
     }
+
+    @Test
+    public void testEqualsSameObject() {
+        LinkedListDeque<String> lld = new LinkedListDeque<>();
+        lld.addLast("a");
+        lld.addLast("b");
+        // 和自己比
+        assertTrue(lld.equals(lld));
+    }
+
+    @Test
+    public void testEqualsIdenticalContent() {
+        LinkedListDeque<String> lld1 = new LinkedListDeque<>();
+        lld1.addLast("a");
+        lld1.addLast("b");
+        lld1.addLast("c");
+
+        LinkedListDeque<String> lld2 = new LinkedListDeque<>();
+        lld2.addLast("a");
+        lld2.addLast("b");
+        lld2.addLast("c");
+
+        assertTrue(lld1.equals(lld2));
+        assertTrue(lld2.equals(lld1));
+    }
+
+    @Test
+    public void testEqualsDifferentSize() {
+        LinkedListDeque<Integer> lld1 = new LinkedListDeque<>();
+        lld1.addLast(1);
+        lld1.addLast(2);
+
+        LinkedListDeque<Integer> lld2 = new LinkedListDeque<>();
+        lld2.addLast(1);
+
+        assertFalse(lld1.equals(lld2));
+    }
+
+    @Test
+    public void testEqualsDifferentContent() {
+        LinkedListDeque<String> lld1 = new LinkedListDeque<>();
+        lld1.addLast("a");
+        lld1.addLast("b");
+
+        LinkedListDeque<String> lld2 = new LinkedListDeque<>();
+        lld2.addLast("a");
+        lld2.addLast("c");
+
+        assertFalse(lld1.equals(lld2));
+    }
+
+    @Test
+    public void testEqualsEmpty() {
+        LinkedListDeque<String> lld1 = new LinkedListDeque<>();
+        LinkedListDeque<String> lld2 = new LinkedListDeque<>();
+        assertTrue(lld1.equals(lld2));
+    }
+
+    @Test
+    public void testEqualsNull() {
+        LinkedListDeque<String> lld = new LinkedListDeque<>();
+        assertFalse(lld.equals(null));
+    }
+
+    @Test
+    public void testEqualsWrongType() {
+        LinkedListDeque<String> lld = new LinkedListDeque<>();
+        lld.addLast("a");
+        assertFalse(lld.equals("a string"));
+    }
+
 }
