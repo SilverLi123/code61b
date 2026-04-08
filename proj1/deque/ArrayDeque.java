@@ -1,6 +1,8 @@
 package deque;
 
-public class ArrayDeque<T> {
+import java.util.Iterator;
+
+public class ArrayDeque<T> implements Iterable<T> {
     private T[] items;
     private int size;
     private int nextFirst;
@@ -25,19 +27,39 @@ public class ArrayDeque<T> {
     }
 
     public void addFirst(T item) {
+        if (size == items.length) {
+            resize(items.length * 2);
+        }
+
         items[nextFirst] = item;
         nextFirst = oneMinus(nextFirst);
         size++;
     }
 
     public void addLast(T item) {
+        if (size == items.length) {
+            resize(items.length * 2);
+        }
         items[nextLast] = item;
         nextLast = onePlus(nextLast);
         size++;
     }
 
+    private void resize(int newCapacity) {
+        T[] newArray = (T[]) new Object[newCapacity];
+
+        for (int i = 0; i < size; i++) {
+            newArray[i] = this.get(i);
+        }
+
+        nextFirst = newCapacity - 1;
+        nextLast = size;
+
+        items = newArray;
+    }
+
     public T get(int index) {
-        if (index < 0 || index > this.size()) {
+        if (index < 0 || index >= this.size()) {
             return null;
         }
 
@@ -63,6 +85,10 @@ public class ArrayDeque<T> {
         items[nextFirst] = null;
         size--;
 
+        if (items.length > INITIAL_CAPACITY && size < items.length / 4) {
+            resize(Math.max(INITIAL_CAPACITY, items.length / 2));
+        }
+
         return removed;
     }
 
@@ -76,6 +102,10 @@ public class ArrayDeque<T> {
         items[nextLast] = null;
         size--;
 
+        if (items.length > INITIAL_CAPACITY && size < items.length / 4) {
+            resize(Math.max(INITIAL_CAPACITY, items.length / 2));
+        }
+
         return removed;
     }
 
@@ -84,6 +114,57 @@ public class ArrayDeque<T> {
             System.out.print(get(i) + " ");
         }
         System.out.println();
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        return new ArrayDequeIterator();
+    }
+
+    private class ArrayDequeIterator implements Iterator<T> {
+        int current = 0;
+
+        @Override
+        public boolean hasNext() {
+            return current < size;
+        }
+
+        @Override
+        public T next() {
+            return get(current++);
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+
+        if (o == this) {
+            return true;
+        }
+
+        if (!(o instanceof ArrayDeque)) {
+            return false;
+        }
+
+        ArrayDeque<T> other = (ArrayDeque<T>) o;
+
+        if (other.size != this.size) {
+            return false;
+        }
+
+        for (int i = 0; i < size; i++) {
+            T thisItem = this.get(i);
+            T otherItem = other.get(i);
+            if (thisItem == null) {
+                if (otherItem != null) return false;
+            } else if (!thisItem.equals(otherItem)) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }
