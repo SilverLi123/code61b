@@ -1,6 +1,5 @@
 package deque;
 
-import net.sf.saxon.functions.ConstantFunction;
 import java.util.Iterator;
 
 public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
