@@ -3,7 +3,7 @@ package deque;
 import net.sf.saxon.functions.ConstantFunction;
 import java.util.Iterator;
 
-public class LinkedListDeque<T> implements Iterable<T> {
+public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
 
     private class Node {
         T item;
@@ -27,6 +27,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
         size = 0;
     }
 
+    @Override
     public void addFirst(T item) {
         Node newNode = new Node(item, sentinel, sentinel.next);
 
@@ -36,6 +37,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
         size++;
     }
 
+    @Override
     public void addLast(T item) {
         Node newNode = new Node(item, sentinel.prev, sentinel);
 
@@ -45,12 +47,9 @@ public class LinkedListDeque<T> implements Iterable<T> {
         size++;
     }
 
+    @Override
     public int size() {
         return size;
-    }
-
-    public Boolean isEmpty() {
-        return this.size() == 0;
     }
 
     public void printDeque() {
@@ -62,6 +61,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
         System.out.println();
     }
 
+    @Override
     public T removeFirst() {
         if (this.isEmpty()) {
             return null;
@@ -82,6 +82,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
         return item;
     }
 
+    @Override
     public T removeLast() {
         if (this.isEmpty()) {
             return null;
@@ -102,6 +103,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
         return item;
     }
 
+    @Override
     public T get(int index) {
         if (index < 0 || index >= this.size()) {
             return null;
