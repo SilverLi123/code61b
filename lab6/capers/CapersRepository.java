@@ -18,9 +18,9 @@ public class CapersRepository {
     static final File CWD = new File(System.getProperty("user.dir"));
 
     /** Main metadata folder. */
-    static final File CAPERS_FOLDER = null; // TODO Hint: look at the `join`
+    static final File CAPERS_FOLDER = Utils.join(CWD, ".capers"); // TODO Hint: look at the `join`
                                             //      function in Utils
-
+    static final File story = Utils.join(CAPERS_FOLDER, "story");
     /**
      * Does required filesystem operations to allow for persistence.
      * (creates any necessary folders or files)
@@ -32,6 +32,12 @@ public class CapersRepository {
      */
     public static void setupPersistence() {
         // TODO
+        if (!CAPERS_FOLDER.exists()) {
+            CAPERS_FOLDER.mkdirs();
+        }
+        if (!Dog.DOG_FOLDER.exists()) {
+            Dog.DOG_FOLDER.mkdirs();
+        }
     }
 
     /**
@@ -41,6 +47,15 @@ public class CapersRepository {
      */
     public static void writeStory(String text) {
         // TODO
+        String current;
+        if (!story.exists()) {
+            current = "";
+        }
+        else {
+            current = Utils.readContentsAsString(story);
+        }
+        Utils.writeContents(story, current + text + "\n");
+        System.out.println(Utils.readContentsAsString(story));
     }
 
     /**
@@ -50,6 +65,9 @@ public class CapersRepository {
      */
     public static void makeDog(String name, String breed, int age) {
         // TODO
+        Dog dog = new Dog(name, breed, age);
+        System.out.println(dog.toString());
+        dog.saveDog();
     }
 
     /**
@@ -60,5 +78,8 @@ public class CapersRepository {
      */
     public static void celebrateBirthday(String name) {
         // TODO
+        Dog dog = Dog.fromFile(name);
+        dog.haveBirthday();
+        dog.saveDog();
     }
 }

@@ -7,7 +7,7 @@ public class FilkTest {
     @Test
     public void testIsSameNumberMystery() {
         // --- 测试 1: 小数字区间 ---
-        // Java 对 -128 到 127 之间的整数有缓存。
+        // Java 对 -128 到 127 之间的整数有缓存。/
         int num1 = 100;
         int num2 = 100;
 
