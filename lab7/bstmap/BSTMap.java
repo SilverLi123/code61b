@@ -1,7 +1,6 @@
 package bstmap;
 
-import java.util.Set;
-import java.util.Iterator;
+import java.util.*;
 
 public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     private BSTNode root;
@@ -117,21 +116,100 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
     @Override
     public Set<K> keySet() {
-        throw new UnsupportedOperationException();
+        Set<K> keySet = new TreeSet<>();
+        BSTNode node = root;
+        addKey(node, keySet);
+        return keySet;
+    }
+
+    private void addKey(BSTNode node, Set<K> keySet) {
+        if (node == null) {
+            return;
+        }
+        addKey(node.left, keySet);
+        keySet.add(node.key);
+        addKey(node.right, keySet);
     }
 
     @Override
     public V remove(K key) {
-        throw new UnsupportedOperationException();
+        if (!containsKey(key)) {
+            return null;
+        }
+        V val = get(key);
+        root = removeHelper(root, key);
+        size -= 1;
+        return val;
+    }
+
+    private BSTNode removeHelper(BSTNode node, K key) {
+        if (node == null) {
+            return null;
+        }
+
+        int cmp = key.compareTo(node.key);
+        if (cmp < 0) {
+            node.left = removeHelper(node.left, key);
+        } else if (cmp > 0) {
+            node.right = removeHelper(node.right, key);
+        } else {
+            if (node.right == null) return node.left;
+            if (node.left == null) return node.right;
+
+            BSTNode successor = min(node.right);
+            node.key = successor.key;
+            node.val = successor.val;
+            node.right = removeHelper(node.right, successor.key);
+        }
+
+        return node;
+    }
+
+    private BSTNode min(BSTNode node) {
+        while (node.left != null) {
+            node = node.left;
+        }
+        return node;
     }
 
     @Override
     public V remove(K key, V val) {
-        throw new UnsupportedOperationException();
+        if (get(key) == val) {
+            remove(key);
+        }
+        return null;
     }
 
     @Override
     public Iterator<K> iterator() {
-        throw new UnsupportedOperationException();
+        return new BSTMapIter();
+}
+
+    private class BSTMapIter implements Iterator<K> {
+        private Deque<BSTMap.BSTNode> stack;
+
+        public BSTMapIter() {
+            stack = new ArrayDeque<>();
+            pushLeft(root);
+        }
+
+        @Override
+        public boolean hasNext() {
+            return !stack.isEmpty();
+        }
+
+        @Override
+        public K next() {
+            BSTMap.BSTNode node = stack.pop();
+            pushLeft(node.right);
+            return (K) node.key;
+        }
+
+        private void pushLeft(BSTMap.BSTNode node) {
+            while (node != null) {
+                stack.push(node);
+                node = node.left;
+            }
+        }
     }
 }
