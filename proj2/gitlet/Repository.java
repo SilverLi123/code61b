@@ -2,6 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.List;
 
 import static gitlet.Utils.*;
 
@@ -63,7 +64,8 @@ public class Repository implements Serializable {
         Utils.writeContents(Utils.join(STAGE_DIR, "staging_ara"), Utils.serialize(staged));
     }
 
-    public static void add(File file) {
+    public static void add(String filename) {
+        File file = Utils.join(CWD, filename);
         if (!file.exists()) {
             System.out.println("File does not exist.");
             System.exit(0);
@@ -102,8 +104,24 @@ public class Repository implements Serializable {
 
     }
 
-    public static void rm(File file) {
+    public static void rm(String filename) {
+        File file = Utils.join(CWD, filename);
+        Commit currentCommit = getCurrentCommit();
+        StagingArea currentStaging = getCurrentStaging();
 
+        if (!currentCommit.getFileMap().containsKey(file) && !currentStaging.getAddition().containsKey(file)) {
+            System.out.println("No reason to remove the file.");
+            System.exit(0);
+        }
+        if (currentStaging.getAddition().containsKey(file)) {
+            currentStaging.getAddition().remove(file);
+        }
+
+        if (currentCommit.getFileMap().containsKey(file)) {
+            currentStaging.getRemoval().put(filename, Utils.sha1(file));
+            Utils.restrictedDelete(file);
+        }
+        Utils.writeContents(Utils.join(STAGE_DIR, "staging_ara"), Utils.serialize(currentStaging));
     }
 
     public static void log() {
@@ -115,7 +133,21 @@ public class Repository implements Serializable {
     }
 
     public static void find(String message) {
+        List<String> commitFiles = Utils.plainFilenamesIn(COMMIT_DIR);
+        boolean found = false;
 
+        for (String sha : commitFiles) {
+            Commit c = Utils.readObject(Utils.join(COMMIT_DIR, sha), Commit.class);
+            String commitMessage = c.getMessage();
+            if (commitMessage.equals(message)) {
+                System.out.println(sha);
+                found = true;
+            }
+
+            if (!found) {
+                System.out.println("Found no commit with that message.");
+            }
+        }
     }
 
     public static void status() {
