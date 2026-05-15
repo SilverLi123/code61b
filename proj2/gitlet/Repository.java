@@ -2,6 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 import static gitlet.Utils.*;
@@ -61,7 +62,7 @@ public class Repository implements Serializable {
         Utils.writeContents(HEAD_FILE, "master");
 
         StagingArea staged = new StagingArea();
-        Utils.writeContents(Utils.join(STAGE_DIR, "staging_ara"), Utils.serialize(staged));
+        Utils.writeContents(Utils.join(STAGE_DIR, "staging_area"), Utils.serialize(staged));
     }
 
     public static void add(String filename) {
@@ -70,33 +71,33 @@ public class Repository implements Serializable {
             System.out.println("File does not exist.");
             System.exit(0);
         }
-        String fileSha = Utils.sha1(Utils.readContentsAsString(file));
+        String fileSha = Utils.sha1(Utils.readContents(file));
         Commit currentCommit = getCurrentCommit();
         Utils.writeContents(Utils.join(BLOBS_DIR, fileSha), Utils.readContents(file));
         StagingArea currentStaging = getCurrentStaging();
 
-        if (currentCommit.getFileMap().containsKey(file) && currentCommit.getFileMap().get(file) == fileSha) {
-            if (currentStaging.getAddition().containsKey(file)) {
-                currentStaging.getAddition().remove(file);
+        if (currentCommit.getFileMap().containsKey(filename) && currentCommit.getFileMap().get(filename).equals(fileSha)) {
+            if (currentStaging.getAddition().containsKey(filename)) {
+                currentStaging.getAddition().remove(filename);
             }
             return;
         }
 
-        if (currentStaging.getRemoval().containsKey(file)) {
-            currentStaging.getRemoval().remove(file);
+        if (currentStaging.getRemoval().containsKey(filename)) {
+            currentStaging.getRemoval().remove(filename);
         }
 
-        currentStaging.getAddition().put(String.valueOf(file), fileSha);
-        Utils.writeContents(Utils.join(STAGE_DIR, "staging_ara"), Utils.serialize(currentStaging));
+        currentStaging.getAddition().put(String.valueOf(filename), fileSha);
+        Utils.writeContents(Utils.join(STAGE_DIR, "staging_area"), Utils.serialize(currentStaging));
     }
 
-    public static Commit getCurrentCommit() {
+    private static Commit getCurrentCommit() {
         String branchName = Utils.readContentsAsString(HEAD_FILE);
         String commitSha = Utils.readContentsAsString(Utils.join(BRANCH_DIR, branchName));
         return Utils.readObject(Utils.join(COMMIT_DIR, commitSha), Commit.class);
     }
 
-    public static StagingArea getCurrentStaging() {
+    private static StagingArea getCurrentStaging() {
         return Utils.readObject(Utils.join(STAGE_DIR, "staging_area"), StagingArea.class);
     }
 
@@ -109,27 +110,55 @@ public class Repository implements Serializable {
         Commit currentCommit = getCurrentCommit();
         StagingArea currentStaging = getCurrentStaging();
 
-        if (!currentCommit.getFileMap().containsKey(file) && !currentStaging.getAddition().containsKey(file)) {
+        if (!currentCommit.getFileMap().containsKey(filename) && !currentStaging.getAddition().containsKey(filename)) {
             System.out.println("No reason to remove the file.");
             System.exit(0);
         }
-        if (currentStaging.getAddition().containsKey(file)) {
-            currentStaging.getAddition().remove(file);
+        if (currentStaging.getAddition().containsKey(filename)) {
+            currentStaging.getAddition().remove(filename);
         }
 
-        if (currentCommit.getFileMap().containsKey(file)) {
-            currentStaging.getRemoval().put(filename, Utils.sha1(file));
+        if (currentCommit.getFileMap().containsKey(filename)) {
+            currentStaging.getRemoval().put(filename, currentCommit.getFileMap().get(filename));
             Utils.restrictedDelete(file);
         }
-        Utils.writeContents(Utils.join(STAGE_DIR, "staging_ara"), Utils.serialize(currentStaging));
+        Utils.writeContents(Utils.join(STAGE_DIR, "staging_area"), Utils.serialize(currentStaging));
+    }
+
+    private static void printCommit(Commit currentCommit) {
+        System.out.println("===");
+        System.out.println("commit " + Utils.sha1(Utils.serialize(currentCommit)));
+        if (currentCommit.getSecondParent() != null) {
+            String parent1 = currentCommit.getParent().substring(0, 7);
+            String parent2 = currentCommit.getSecondParent().substring(0, 7);
+            System.out.println("Merge: " + parent1 + " " + parent2);
+        }
+        Date timestamp = currentCommit.getTimestamp();
+        String dateStr = String.format("%ta %tb %td %tT %tY %tz", timestamp, timestamp, timestamp, timestamp, timestamp, timestamp);
+        System.out.println("Date: " + dateStr);
+        System.out.println(currentCommit.getMessage());
+        System.out.println();
     }
 
     public static void log() {
+        String branchName = Utils.readContentsAsString(HEAD_FILE);
+        Commit currentCommit = getCurrentCommit();
 
+        while (currentCommit != null) {
+            printCommit(currentCommit);
+
+            if (currentCommit.getParent() == null) {break;}
+
+            currentCommit = Utils.readObject(Utils.join(COMMIT_DIR, currentCommit.getParent()), Commit.class);
+        }
     }
 
     public static void global_log() {
-
+        List<String> commitFile = Utils.plainFilenamesIn(COMMIT_DIR);
+        for (String sha : commitFile) {
+            Commit c = Utils.readObject(Utils.join(COMMIT_DIR, sha), Commit.class);
+            printCommit(c);
+        }
     }
 
     public static void find(String message) {
@@ -143,10 +172,9 @@ public class Repository implements Serializable {
                 System.out.println(sha);
                 found = true;
             }
-
-            if (!found) {
-                System.out.println("Found no commit with that message.");
             }
+        if (!found) {
+            System.out.println("Found no commit with that message.");
         }
     }
 
