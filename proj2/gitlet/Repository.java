@@ -120,8 +120,8 @@ public class Repository implements Serializable {
         Commit currentCommit = getCurrentCommit();
         TreeMap<String, String> newFileMap = new TreeMap<>(currentCommit.getFileMap());
 
-        for (String fileanme : currentStaging.getAddition().keySet()) {
-            newFileMap.put(fileanme, currentStaging.getAddition().get(fileanme));
+        for (String filename : currentStaging.getAddition().keySet()) {
+            newFileMap.put(filename, currentStaging.getAddition().get(filename));
         }
         for (String filename : currentStaging.getRemoval().keySet()) {
             newFileMap.remove(filename);
@@ -214,11 +214,40 @@ public class Repository implements Serializable {
     }
 
     public static void status() {
+        String branchName = Utils.readContentsAsString(HEAD_FILE);
+        List<String> branches = Utils.plainFilenamesIn(BRANCH_DIR);
+        System.out.println("=== Branches ===");
+        for (String branch : branches) {
+            if (branch.equals(branchName)) {
+                System.out.println("*" + branch);
+            } else {
+                System.out.println(branch);
+            }
+        }
+        System.out.println();
 
+        StagingArea currrentStaging = getCurrentStaging();
+
+        System.out.println("=== Staged Files ===");
+        for (String filename : currrentStaging.getAddition().keySet()) {
+            System.out.println(filename);
+        }
+        System.out.println();
+
+        System.out.println("=== Removed Files ===");
+        for (String filename : currrentStaging.getRemoval().keySet()) {
+            System.out.println(filename);
+        }
+        System.out.println();
+
+        System.out.println("=== Modifications Not Staged For Commit ===");
+        System.out.println();
+        System.out.println("=== Untracked Files ===");
+        System.out.println();
     }
 
     public static void checkoutFile(String filename) {
-
+        
     }
 
     public static void checkoutBranch(String branch) {
