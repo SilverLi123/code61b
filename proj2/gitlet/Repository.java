@@ -162,7 +162,7 @@ public class Repository implements Serializable {
 
     private static void printCommit(Commit currentCommit) {
         System.out.println("===");
-        System.out.println("commit " + getCurrentSha());
+        System.out.println("commit " + Utils.sha1(Utils.serialize(currentCommit)));
         if (currentCommit.getSecondParent() != null) {
             String parent1 = currentCommit.getParent().substring(0, 7);
             String parent2 = currentCommit.getSecondParent().substring(0, 7);
