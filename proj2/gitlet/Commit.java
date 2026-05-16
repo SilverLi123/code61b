@@ -1,9 +1,6 @@
 package gitlet;
 
 // TODO: any imports you need here
-
-import org.knowm.xchart.internal.chartpart.AxisTickCalculator_;
-
 import java.io.Serializable;
 import java.util.Date;
 import java.io.File;
@@ -32,11 +29,11 @@ public class Commit implements Serializable {
     private String secondParent;
     private TreeMap<String, String> fileMap;
 
-    public Commit(String message, String parent, String secondParent) {
+    public Commit(String message, String parent, String secondParent, TreeMap<String, String> fileMap) {
         this.message = message;
         this.parent = parent;
         this.secondParent = secondParent;
-        this.fileMap = new TreeMap<>();
+        this.fileMap = fileMap;
 
         if (parent == null) {
             this.timestamp = new Date(0);

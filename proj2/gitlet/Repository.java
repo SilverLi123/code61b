@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.TreeMap;
 
 import static gitlet.Utils.*;
 
@@ -50,7 +51,7 @@ public class Repository implements Serializable {
         BRANCH_DIR.mkdirs();
         STAGE_DIR.mkdirs();
 
-        Commit initial = new Commit("initial commit", null, null);
+        Commit initial = new Commit("initial commit", null, null, new TreeMap<>());
 
         byte[] serialized = Utils.serialize(initial);
         String sha1 = Utils.sha1(serialized);
@@ -91,9 +92,13 @@ public class Repository implements Serializable {
         Utils.writeContents(Utils.join(STAGE_DIR, "staging_area"), Utils.serialize(currentStaging));
     }
 
-    private static Commit getCurrentCommit() {
+    private static String getCurrentSha() {
         String branchName = Utils.readContentsAsString(HEAD_FILE);
-        String commitSha = Utils.readContentsAsString(Utils.join(BRANCH_DIR, branchName));
+        return Utils.readContentsAsString(Utils.join(BRANCH_DIR, branchName));
+    }
+
+    private static Commit getCurrentCommit() {
+        String commitSha = getCurrentSha();
         return Utils.readObject(Utils.join(COMMIT_DIR, commitSha), Commit.class);
     }
 
@@ -101,8 +106,38 @@ public class Repository implements Serializable {
         return Utils.readObject(Utils.join(STAGE_DIR, "staging_area"), StagingArea.class);
     }
 
-    public static void commit(String message, String parent, String secondParent) {
+    public static void commit(String message) {
+        if (message == null) {
+            System.out.println("Please enter a commit message.");
+            System.exit(0);
+        }
+        StagingArea currentStaging = getCurrentStaging();
+        if (currentStaging.getAddition().isEmpty() && currentStaging.getRemoval().isEmpty()) {
+            System.out.println("No changes added to the commit.");
+            System.exit(0);
+        }
 
+        Commit currentCommit = getCurrentCommit();
+        TreeMap<String, String> newFileMap = new TreeMap<>(currentCommit.getFileMap());
+
+        for (String fileanme : currentStaging.getAddition().keySet()) {
+            newFileMap.put(fileanme, currentStaging.getAddition().get(fileanme));
+        }
+        for (String filename : currentStaging.getRemoval().keySet()) {
+            newFileMap.remove(filename);
+        }
+
+        Commit newCommit = new Commit(message, getCurrentSha(), null, newFileMap);
+        byte[] serialized = Utils.serialize(newCommit);
+        String newSha = Utils.sha1(serialized);
+        Utils.writeContents(Utils.join(COMMIT_DIR, newSha), serialized);
+
+        String branchName = Utils.readContentsAsString(HEAD_FILE);
+        Utils.writeContents(Utils.join(BRANCH_DIR, branchName), newSha);
+
+        currentStaging.getAddition().clear();
+        currentStaging.getRemoval().clear();
+        Utils.writeContents(Utils.join(STAGE_DIR, "staging_area"), Utils.serialize(currentStaging));
     }
 
     public static void rm(String filename) {
@@ -127,7 +162,7 @@ public class Repository implements Serializable {
 
     private static void printCommit(Commit currentCommit) {
         System.out.println("===");
-        System.out.println("commit " + Utils.sha1(Utils.serialize(currentCommit)));
+        System.out.println("commit " + getCurrentSha());
         if (currentCommit.getSecondParent() != null) {
             String parent1 = currentCommit.getParent().substring(0, 7);
             String parent2 = currentCommit.getSecondParent().substring(0, 7);
