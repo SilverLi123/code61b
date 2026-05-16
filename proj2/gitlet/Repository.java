@@ -247,15 +247,95 @@ public class Repository implements Serializable {
     }
 
     public static void checkoutFile(String filename) {
-        
+        Commit currentCommit = getCurrentCommit();
+        if (!currentCommit.getFileMap().containsKey(filename)) {
+            System.out.println("File does not exist in that commit.");
+            System.exit(0);
+        }
+        String blobSha = currentCommit.getFileMap().get(filename);
+        byte[] content = Utils.readContents(Utils.join(BLOBS_DIR, blobSha));
+        Utils.writeContents(Utils.join(CWD, filename), content);
     }
 
     public static void checkoutBranch(String branch) {
+        File branchFile = Utils.join(BRANCH_DIR, branch);
+        if (!branchFile.exists()) {
+            System.out.println("No such branch exists.");
+            System.exit(0);
+        }
+        if (Utils.readContentsAsString(HEAD_FILE).equals(branch)) {
+            System.out.println("No need to checkout the current branch.");
+            System.exit(0);
+        }
 
+        String targetSha = Utils.readContentsAsString(branchFile);
+        Commit targetCommit = Utils.readObject(Utils.join(COMMIT_DIR, targetSha), Commit.class);
+        Commit currentCommit = getCurrentCommit();
+        List<String> cwdFile = Utils.plainFilenamesIn(CWD);
+
+        for (String filename : cwdFile) {
+            boolean isTracked = currentCommit.getFileMap().containsKey(filename);
+            boolean isInTarget = targetCommit.getFileMap().containsKey(filename);
+            if (! isTracked && isInTarget) {
+                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.exit(0);
+            }
+        }
+
+        for (String filename : currentCommit.getFileMap().keySet()) {
+            if (! targetCommit.getFileMap().containsKey(filename)) {
+                Utils.restrictedDelete(filename);
+            }
+        }
+
+        for (String filename : targetCommit.getFileMap().keySet()) {
+            String blobSha = targetCommit.getFileMap().get(filename);
+            byte[] content = Utils.readContents(Utils.join(BLOBS_DIR, blobSha));
+            Utils.writeContents(Utils.join(CWD, filename), content);
+        }
+
+        Utils.writeContents(HEAD_FILE, branch);
+        StagingArea staging = getCurrentStaging();
+        staging.getAddition().clear();
+        staging.getRemoval().clear();
+        Utils.writeContents(Utils.join(STAGE_DIR, "staging_area"), Utils.serialize(staging));
     }
 
     public static void checkoutFileFromCommit(String commitId, String filename) {
+        List<String> commitFile = Utils.plainFilenamesIn(COMMIT_DIR);
+        boolean commit_exist = false;
+        Commit targetCommit = null;
 
+        if (commitId.length() < 40) {
+            for (String sha : commitFile) {
+                if (sha.startsWith(commitId)) {
+                    commitId = sha;
+                    break;
+                }
+            }
+        }
+
+        for (String commit : commitFile) {
+            if (commit.equals(commitId)) {
+                targetCommit = Utils.readObject(Utils.join(COMMIT_DIR, commit), Commit.class);
+                commit_exist = true;
+                break;
+            }
+        }
+
+        if (!commit_exist) {
+            System.out.println("No commit with that id exists.");
+            System.exit(0);
+        }
+
+        if (!targetCommit.getFileMap().containsKey(filename)) {
+            System.out.println("File does not exist in that commit.");
+            System.exit(0);
+        }
+
+        String blobSha = targetCommit.getFileMap().get(filename);
+        byte[] content = Utils.readContents(Utils.join(BLOBS_DIR, blobSha));
+        Utils.writeContents(Utils.join(CWD, filename), content);
     }
 
     public static void branch(String branch) {
