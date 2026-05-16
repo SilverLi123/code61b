@@ -257,6 +257,34 @@ public class Repository implements Serializable {
         Utils.writeContents(Utils.join(CWD, filename), content);
     }
 
+    private static void checkUntrackedFiles(Commit targetCommit) {
+        Commit currentCommit = getCurrentCommit();
+        List<String> cwdFiles = Utils.plainFilenamesIn(CWD);
+        for (String filename : cwdFiles) {
+            boolean isTracked = currentCommit.getFileMap().containsKey(filename);
+            boolean isInTarget = targetCommit.getFileMap().containsKey(filename);
+            if (!isTracked && isInTarget) {
+                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.exit(0);
+            }
+        }
+    }
+
+    private static void writeContentToCWD(Commit targetCommit) {
+        for (String filename : targetCommit.getFileMap().keySet()) {
+            String blobSha = targetCommit.getFileMap().get(filename);
+            byte[] content = Utils.readContents(Utils.join(BLOBS_DIR, blobSha));
+            Utils.writeContents(Utils.join(CWD, filename), content);
+        }
+    }
+
+    private static void clearStagingArea() {
+        StagingArea staging = getCurrentStaging();
+        staging.getAddition().clear();
+        staging.getRemoval().clear();
+        Utils.writeContents(Utils.join(STAGE_DIR, "staging_area"), Utils.serialize(staging));
+    }
+
     public static void checkoutBranch(String branch) {
         File branchFile = Utils.join(BRANCH_DIR, branch);
         if (!branchFile.exists()) {
@@ -271,16 +299,7 @@ public class Repository implements Serializable {
         String targetSha = Utils.readContentsAsString(branchFile);
         Commit targetCommit = Utils.readObject(Utils.join(COMMIT_DIR, targetSha), Commit.class);
         Commit currentCommit = getCurrentCommit();
-        List<String> cwdFile = Utils.plainFilenamesIn(CWD);
-
-        for (String filename : cwdFile) {
-            boolean isTracked = currentCommit.getFileMap().containsKey(filename);
-            boolean isInTarget = targetCommit.getFileMap().containsKey(filename);
-            if (! isTracked && isInTarget) {
-                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
-                System.exit(0);
-            }
-        }
+        checkUntrackedFiles(targetCommit);
 
         for (String filename : currentCommit.getFileMap().keySet()) {
             if (! targetCommit.getFileMap().containsKey(filename)) {
@@ -288,20 +307,12 @@ public class Repository implements Serializable {
             }
         }
 
-        for (String filename : targetCommit.getFileMap().keySet()) {
-            String blobSha = targetCommit.getFileMap().get(filename);
-            byte[] content = Utils.readContents(Utils.join(BLOBS_DIR, blobSha));
-            Utils.writeContents(Utils.join(CWD, filename), content);
-        }
-
+        writeContentToCWD(targetCommit);
         Utils.writeContents(HEAD_FILE, branch);
-        StagingArea staging = getCurrentStaging();
-        staging.getAddition().clear();
-        staging.getRemoval().clear();
-        Utils.writeContents(Utils.join(STAGE_DIR, "staging_area"), Utils.serialize(staging));
+        clearStagingArea();
     }
 
-    public static void checkoutFileFromCommit(String commitId, String filename) {
+    private static Commit findCommit(String commitId) {
         List<String> commitFile = Utils.plainFilenamesIn(COMMIT_DIR);
         boolean commit_exist = false;
         Commit targetCommit = null;
@@ -322,8 +333,13 @@ public class Repository implements Serializable {
                 break;
             }
         }
+        return targetCommit;
+    }
 
-        if (!commit_exist) {
+    public static void checkoutFileFromCommit(String commitId, String filename) {
+        Commit targetCommit = findCommit(commitId);
+
+        if (targetCommit == null) {
             System.out.println("No commit with that id exists.");
             System.exit(0);
         }
@@ -338,16 +354,52 @@ public class Repository implements Serializable {
         Utils.writeContents(Utils.join(CWD, filename), content);
     }
 
-    public static void branch(String branch) {
+    private static boolean branchExists(String branch) {
+        return Utils.join(BRANCH_DIR, branch).exists();
+    }
 
+    public static void branch(String branch) {
+        if (branchExists(branch)) {
+            System.out.println("A branch with that name already exists.");
+            System.exit(0);
+        }
+
+        String currentSha = Utils.readContentsAsString(Utils.join(BRANCH_DIR, Utils.readContentsAsString(HEAD_FILE)));
+        Utils.writeContents(Utils.join(BRANCH_DIR, branch), currentSha);
     }
 
     public static void rm_branch(String branch) {
+        if (!branchExists(branch)) {
+            System.out.println("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        if (Utils.readContentsAsString(HEAD_FILE).equals(branch)) {
+            System.out.println("Cannot remove the current branch.");
+            System.exit(0);
+        }
 
+        Utils.restrictedDelete(Utils.join(BRANCH_DIR, branch));
     }
 
-    public static void reset(String sha) {
+    public static void reset(String commitId) {
+        Commit targetCommit = findCommit(commitId);
+        if (targetCommit == null) {
+            System.out.println("No commit with that id exists.");
+            System.exit(0);
+        }
+        checkUntrackedFiles(targetCommit);
+        Commit currentCommit = getCurrentCommit();
+        List<String> cwdFile = Utils.plainFilenamesIn(CWD);
 
+        for (String filename : cwdFile) {
+            if (currentCommit.getFileMap().containsKey(filename)) {
+                Utils.restrictedDelete(filename);
+            }
+        }
+        writeContentToCWD(targetCommit);
+        String branchName = Utils.readContentsAsString(HEAD_FILE);
+        Utils.writeContents(Utils.join(BRANCH_DIR, branchName), commitId);
+        clearStagingArea();
     }
 
     public static void merge(String branch) {
