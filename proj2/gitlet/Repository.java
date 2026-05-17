@@ -2,9 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.Date;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 
 import static gitlet.Utils.*;
 
@@ -403,8 +401,138 @@ public class Repository implements Serializable {
     }
 
     public static void merge(String branch) {
+        StagingArea currentStaging = getCurrentStaging();
+        if (!currentStaging.getAddition().isEmpty() || currentStaging.getRemoval().isEmpty()) {
+            System.out.println("You have uncommitted changes.");
+            System.exit(0);
+        }
+
+        if (!branchExists(branch)) {
+            System.out.println("A branch with that name does not exist.");
+            System.exit(0);
+        }
+
+        String currentBranch = Utils.readContentsAsString(HEAD_FILE);
+        if (currentBranch.equals(branch)) {
+            System.out.println("Cannot merge a branch with itself.");
+            System.exit(0);
+        }
+
+        String givenBranchSha = Utils.readContentsAsString(Utils.join(BRANCH_DIR, branch));
+        Commit mergedCommit = Utils.readObject(Utils.join(COMMIT_DIR, givenBranchSha), Commit.class);
+        checkUntrackedFiles(mergedCommit);
+
+        String splitSha = FindSplitPoint(branch);
+        Commit splitCommit = Utils.readObject(Utils.join(COMMIT_DIR, splitSha), Commit.class);
+        boolean hasConflict = false;
+
+        if (givenBranchSha.equals(splitSha)) {
+            System.out.println("Given branch is an ancestor.");
+            System.exit(0);
+        }
+        else if (splitSha.equals(getCurrentSha())) {
+            checkoutBranch(branch);
+            System.out.println("Current branch fast-forwarded.");
+        }
+        else {
+            Commit currentCommit = getCurrentCommit();
+            Set<String> allFiles = new TreeSet<>();
+            allFiles.addAll(splitCommit.getFileMap().keySet());
+            allFiles.addAll(currentCommit.getFileMap().keySet());
+            allFiles.addAll(mergedCommit.getFileMap().keySet());
+
+            for (String filename : allFiles) {
+                String currentBlob = currentCommit.getFileMap().get(filename);
+                String givenBlob = mergedCommit.getFileMap().get(filename);
+                String splitBlob = splitCommit.getFileMap().get(filename);
+                boolean currentModified = (splitBlob == null) ? (currentBlob != null) : !splitBlob.equals(currentBlob);
+                boolean givenModified = (splitBlob == null) ? (givenBlob != null) : !splitBlob.equals(givenBlob);
+                boolean bothExist = currentBlob != null && givenBlob != null;
+                boolean sameContent = bothExist && currentBlob.equals(givenBlob);
+                boolean bothRemoved = currentBlob == null && givenBlob == null;
+
+                if (!currentModified && givenModified && givenBlob != null) {
+                    byte[] content = Utils.readContents(Utils.join(BLOBS_DIR, givenBlob));
+                    Utils.writeContents(Utils.join(CWD, filename), content);
+                    currentStaging.getAddition().put(filename, givenBlob);
+                }
+                else if (currentModified && !givenModified) {
+                    continue;
+                }
+                else if (sameContent || bothRemoved) {
+                    continue;
+                }
+                else if (!currentModified && givenModified && givenBlob == null) {
+                    Utils.restrictedDelete(filename);
+                    currentStaging.getRemoval().put(filename, splitBlob);
+                }
+                else if (currentBlob == null && !givenModified) {
+                    continue;
+                }
+                else {
+                    String currentContent = (currentBlob != null)
+                            ? Utils.readContentsAsString(Utils.join(BLOBS_DIR, currentBlob)) : "";
+                    String givenContent = (givenBlob != null)
+                            ? Utils.readContentsAsString(Utils.join(BLOBS_DIR, givenBlob)) : "";
+                    String conflict = "<<<<<<< HEAD\n" + currentContent + "=======\n" + givenContent + ">>>>>>>\n";
+                    Utils.writeContents(Utils.join(CWD, filename), conflict);
+                    currentStaging.getAddition().put(filename, Utils.sha1(conflict));
+                    hasConflict = true;
+                }
+            }
+
+            TreeMap<String, String> newFileMap = new TreeMap<>(currentCommit.getFileMap());
+            for (String filename : currentStaging.getAddition().keySet()) {
+                newFileMap.put(filename, currentStaging.getAddition().get(filename));
+            }
+            for (String filename : currentStaging.getRemoval().keySet()) {
+                newFileMap.remove(filename);
+            }
+
+            String mergeMessage = "Merged " + branch + " into " + Utils.readContentsAsString(HEAD_FILE) + ".";
+            Commit mergeCommit = new Commit(mergeMessage, getCurrentSha(), givenBranchSha, newFileMap);
+            byte[] serialized = Utils.serialize(mergeCommit);
+            String mergeSha = Utils.sha1(serialized);
+            Utils.writeContents(Utils.join(COMMIT_DIR, mergeSha), serialized);
+
+            String branchName = Utils.readContentsAsString(HEAD_FILE);
+            Utils.writeContents(Utils.join(BRANCH_DIR, branchName), mergeSha);
+            clearStagingArea();
+
+            if (hasConflict) {
+                System.out.println("Encountered a merge conflict.");
+            }
+        }
 
     }
 
+    private static String FindSplitPoint(String branch) {
+        Set<String> currentAncestors = new HashSet<>();
+        Queue<String> queue = new LinkedList<>();
+        queue.add(getCurrentSha());
+        while (!queue.isEmpty()) {
+            String sha = queue.remove();
+            if (sha == null || currentAncestors.contains(sha)) continue;
+            currentAncestors.add(sha);
+            Commit c = Utils.readObject(Utils.join(COMMIT_DIR, sha), Commit.class);
+            queue.add(c.getParent());
+            if (c.getSecondParent() != null) {
+                queue.add(c.getSecondParent());
+            }
+        }
 
+        queue.clear();
+        queue.add(Utils.readContentsAsString(Utils.join(BRANCH_DIR, branch)));
+        while (!queue.isEmpty()) {
+            String sha = queue.remove();
+            if (sha == null) continue;
+            if (currentAncestors.contains(sha)) return sha;
+            Commit c = Utils.readObject(Utils.join(COMMIT_DIR, sha), Commit.class);
+            queue.add(c.getParent());
+            if (c.getSecondParent() != null) {
+                queue.add(c.getSecondParent());
+            }
+        }
+        return null;
+    }
 }

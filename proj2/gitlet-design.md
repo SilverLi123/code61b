@@ -147,18 +147,25 @@ Stores the files which are about to add or remove.
 2. If branch does not exist, print error and exit.
 3. If branch == current branch, print error and exit.
 4. Check for untracked files in CWD that would be overwritten. If any, print error and exit.
-5. Find split point: BFS from both branch heads, find latest common ancestor.
+5. Find split point: collect all ancestors of current branch, then walk back from given branch until find first match.
 6. If split point == given branch head, print "Given branch is an ancestor" and exit.
 7. If split point == current branch head, fast-forward: checkout given branch, print message.
-8. Otherwise, compare files across split point, current commit, and given commit:
-   - Modified in given only → checkout from given, stage it.
-   - Modified in current only → keep as is.
-   - Modified in same way → keep as is.
-   - New in given only → checkout and stage.
-   - Present at split, unmodified in current, absent in given → remove and untrack.
-   - Modified differently → write conflict file, stage it.
+8. Otherwise, compare files across split point, current commit, and given commit (see table below).
 9. Create merge commit with two parents (current + given).
 10. If there were conflicts, print "Encountered a merge conflict."
+
+#### Merge file comparison rules
+
+| # | split | current | given        | action       |
+|---|-------|---------|--------------|--------------|
+| 1 | 有    | 没改    | 改了         | 用 given 的  |
+| 2 | 有    | 改了    | 没改         | 保持 current |
+| 3 | 有    | 改了    | 改了（一样） | 不动         |
+| 4 | 没有  | 有      | 没有         | 保持 current |
+| 5 | 没有  | 没有    | 有           | 用 given 的  |
+| 6 | 有    | 没改    | 删了         | 删掉         |
+| 7 | 有    | 删了    | 没改         | 保持删除     |
+| 8 | -     | 不一样  | 不一样       | 冲突         |
 
 ## Persistence
 
