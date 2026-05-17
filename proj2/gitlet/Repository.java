@@ -86,7 +86,7 @@ public class Repository implements Serializable {
             currentStaging.getRemoval().remove(filename);
         }
 
-        currentStaging.getAddition().put(String.valueOf(filename), fileSha);
+        currentStaging.getAddition().put(filename, fileSha);
         Utils.writeContents(Utils.join(STAGE_DIR, "staging_area"), Utils.serialize(currentStaging));
     }
 
@@ -396,13 +396,15 @@ public class Repository implements Serializable {
         }
         writeContentToCWD(targetCommit);
         String branchName = Utils.readContentsAsString(HEAD_FILE);
-        Utils.writeContents(Utils.join(BRANCH_DIR, branchName), commitId);
+        byte[] resetSerialized = Utils.serialize(targetCommit);
+        String fullSha = Utils.sha1(resetSerialized);
+        Utils.writeContents(Utils.join(BRANCH_DIR, branchName), fullSha);
         clearStagingArea();
     }
 
     public static void merge(String branch) {
         StagingArea currentStaging = getCurrentStaging();
-        if (!currentStaging.getAddition().isEmpty() || currentStaging.getRemoval().isEmpty()) {
+        if (!currentStaging.getAddition().isEmpty() || !currentStaging.getRemoval().isEmpty()) {
             System.out.println("You have uncommitted changes.");
             System.exit(0);
         }
@@ -476,6 +478,8 @@ public class Repository implements Serializable {
                             ? Utils.readContentsAsString(Utils.join(BLOBS_DIR, givenBlob)) : "";
                     String conflict = "<<<<<<< HEAD\n" + currentContent + "=======\n" + givenContent + ">>>>>>>\n";
                     Utils.writeContents(Utils.join(CWD, filename), conflict);
+                    String conflictSha = Utils.sha1(conflict);
+                    Utils.writeContents(Utils.join(BLOBS_DIR, conflictSha), conflict);
                     currentStaging.getAddition().put(filename, Utils.sha1(conflict));
                     hasConflict = true;
                 }
