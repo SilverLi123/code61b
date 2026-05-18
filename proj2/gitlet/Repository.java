@@ -1,7 +1,6 @@
 package gitlet;
 
 import java.io.File;
-import java.io.Serializable;
 import java.util.*;
 
 import static gitlet.Utils.*;
@@ -14,7 +13,7 @@ import static gitlet.Utils.*;
  *
  *  @author TODO
  */
-public class Repository implements Serializable {
+public class Repository {
     /**
      * TODO: add instance variables here.
      *
@@ -79,6 +78,10 @@ public class Repository implements Serializable {
             if (currentStaging.getAddition().containsKey(filename)) {
                 currentStaging.getAddition().remove(filename);
             }
+            if (currentStaging.getRemoval().containsKey(filename)) {
+                currentStaging.getRemoval().remove(filename);
+            }
+            Utils.writeContents(Utils.join(STAGE_DIR, "staging_area"), Utils.serialize(currentStaging));
             return;
         }
 
@@ -105,7 +108,7 @@ public class Repository implements Serializable {
     }
 
     public static void commit(String message) {
-        if (message == null) {
+        if (message == null || message.isEmpty()) {
             System.out.println("Please enter a commit message.");
             System.exit(0);
         }
@@ -376,7 +379,7 @@ public class Repository implements Serializable {
             System.exit(0);
         }
 
-        Utils.restrictedDelete(Utils.join(BRANCH_DIR, branch));
+        Utils.join(BRANCH_DIR, branch).delete();
     }
 
     public static void reset(String commitId) {
