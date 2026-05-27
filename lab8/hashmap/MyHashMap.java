@@ -1,9 +1,6 @@
 package hashmap;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 
 /**
  *  A hash table-backed Map implementation. Provides amortized constant time
@@ -35,9 +32,13 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
     // You should probably define some more!
 
     /** Constructors */
-    public MyHashMap() { }
+    public MyHashMap() {
+        this(16, 0.75);
+    }
 
-    public MyHashMap(int initialSize) { }
+    public MyHashMap(int initialSize) {
+        this(initialSize, 0.75);
+    }
 
     /**
      * MyHashMap constructor that creates a backing array of initialSize.
@@ -128,26 +129,79 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
     @Override
     public V get(K key) {
         int index = Math.floorMod(key.hashCode(), buckets.length);
-
-    }
-
-    @Override
-    public void put(K key, V value) {
-
-    }
-
-    @Override
-    public Set<K> keySet() {
+        for (Node n : buckets[index]) {
+            if (n.key.equals(key)) {
+                return n.value;
+            }
+        }
         return null;
     }
 
     @Override
+    public void put(K key, V value) {
+        if ((double) (size + 1) / buckets.length >= maxload) {
+            resize();
+        }
+
+        int index = Math.floorMod(key.hashCode(), buckets.length);
+        if (containsKey(key)) {
+            for (Node n : buckets[index]) {
+                if (n.key.equals(key)) {
+                    n.value =value;
+                    return;
+                }
+            }
+        }
+        buckets[index].add(createNode(key, value));
+        size++;
+    }
+
+    private void resize() {
+        Collection<Node>[] newBucket = createTable(buckets.length * 2);
+
+        for (int i = 0; i < buckets.length; i++) {
+            for (Node n : buckets[i]) {
+                int newIndex = Math.floorMod(n.key.hashCode(), newBucket.length);
+                newBucket[newIndex].add(n);
+            }
+        }
+        buckets = newBucket;
+    }
+
+    @Override
+    public Set<K> keySet() {
+        Set<K> keyset = new HashSet<>();
+        for (int i = 0; i < buckets.length; i++)  {
+            for (Node n : buckets[i]) {
+                keyset.add(n.key);
+            }
+        }
+        return keyset;
+    }
+
+    @Override
     public V remove(K key) {
+        int index = Math.floorMod(key.hashCode(), buckets.length);
+        for (Node n : buckets[index]) {
+            if (n.key.equals(key)) {
+                V value = n.value;
+                buckets[index].remove(n);
+                size--;
+                return value;
+            }
+        }
         return null;
     }
 
     @Override
     public V remove(K key, V value) {
+        if (!containsKey(key)) {
+            return null;
+        }
+        V targetValue = get(key);
+        if (targetValue.equals(value)) {
+            return remove(key);
+        }
         return null;
     }
 
