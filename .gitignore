@@ -7,6 +7,9 @@
 !.fatweleminus
 !.gitignore
 !library-sp21
+proj2/testing/student_tests/
+proj2/testing/src/hello.txt
+proj2/testing/src/world.txt
 !foods.csv
 *.class
 *.log
