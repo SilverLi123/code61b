@@ -1,0 +1,66 @@
+Lab 8 Speed Test Results
+
+=== InsertRandomSpeedTest (L=100) ===
+ULLMap: Stack Overflow at 100000 strings
+MyHashMap: 0.11 sec for 90000 strings
+Java HashMap: 0.09 sec for 90000 strings
+
+MyHashMap is roughly 1.2x slower than Java's built-in HashMap, which is within the expected range.
+
+
+=== InsertInOrderSpeedTest ===
+ULLMap: Stack Overflow at 900000 strings
+
+MyHashMap vs Java HashMap (100000 strings):
+  MyHashMap: 0.05 sec
+  Java HashMap: 0.02 sec
+
+MyHashMap vs Java HashMap (800000 strings):
+  MyHashMap: 0.23 sec
+  Java HashMap: 0.21 sec
+
+MyHashMap performs close to Java's HashMap even with in-order insertions.
+Unlike ULLMap (which uses linked lists and stack overflows), MyHashMap handles
+ordered data well because hash codes spread keys across buckets regardless of
+insertion order.
+
+
+=== BucketsSpeedTest (L=1000) ===
+N=100000:
+  ArrayList buckets: 0.97 sec
+  LinkedList buckets: 0.95 sec
+  TreeSet buckets: 1.00 sec
+  HashSet buckets: 0.95 sec
+  PriorityQueue buckets: 0.99 sec
+
+N=1000000:
+  ArrayList buckets: 9.99 sec
+  LinkedList buckets: 9.78 sec
+  TreeSet buckets: 9.64 sec
+  HashSet buckets: 9.73 sec
+  PriorityQueue buckets: 9.55 sec
+
+All bucket types perform similarly because we only use Collection interface methods
+(add, remove, iterator) to search for nodes. This means we always do a linear scan
+through each bucket, regardless of the underlying data structure's capabilities.
+Since the load factor keeps buckets small, the linear scan is still fast.
+
+
+=== Discussion: When to use TreeMap instead of HashMap ===
+TreeMap is better when:
+- You need keys in sorted order (e.g., range queries, iterate in order)
+- You need operations like ceilingKey, floorKey, higherKey, lowerKey
+- You care about worst-case performance (TreeMap guarantees O(log n) worst case,
+  HashMap can degrade to O(n) with bad hash codes)
+HashMap is better when:
+- You just need fast put/get/remove and don't care about order
+- You want simpler, faster average-case performance (O(1) amortized)
+
+
+=== Discussion: Could TreeSet/HashSet buckets be faster? ===
+Currently, we iterate through buckets linearly because we only use Collection methods.
+But TreeSet supports O(log n) lookup and HashSet supports O(1) lookup natively.
+If we could use TreeSet.contains() or HashSet.contains() directly instead of
+iterating, those bucket types would be significantly faster. However, our Node
+objects would need proper compareTo() / hashCode() implementations that only
+consider the key field, not the value, for this to work correctly.
