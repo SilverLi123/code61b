@@ -30,11 +30,11 @@ public class Room {
     }
 
     public int centerX() {
-        return (this.x + this.width) / 2;
+        return this.x + this.width / 2;
     }
 
     public int centerY() {
-        return (this.y + this.height) / 2;
+        return this.y + this.height / 2;
     }
 
     public boolean overlaps(Room room) {

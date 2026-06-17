@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>CS61B</groupId>
+    <artifactId>code61b</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>lab1</module>
+        <module>lab2</module>
+        <module>lab2setup</module>
+        <module>lab3</module>
+        <module>lab4</module>
+        <module>lab6</module>
+        <module>lab7</module>
+        <module>lab8</module>
+        <module>proj1</module>
+        <module>proj1ec</module>
+        <module>proj2</module>
+        <module>proj3</module>
+    </modules>
+</project>

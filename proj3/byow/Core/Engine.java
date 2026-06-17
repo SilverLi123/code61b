@@ -3,11 +3,15 @@ package byow.Core;
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 
+import java.util.ArrayList;
+import java.util.Random;
+
 public class Engine {
     TERenderer ter = new TERenderer();
+    private TETile[][] world;
     /* Feel free to change the width and height. */
     public static final int WIDTH = 80;
-    public static final int HEIGHT = 30;
+    public static final int HEIGHT = 40;
 
     /**
      * Method used for exploring a fresh world. This method should handle all inputs,
@@ -38,15 +42,35 @@ public class Engine {
      * @return the 2D TETile[][] representing the state of the world
      */
     public TETile[][] interactWithInputString(String input) {
-        // TODO: Fill out this method so that it run the engine using the input
-        // passed in as an argument, and return a 2D tile representation of the
-        // world that would have been drawn if the same inputs had been given
-        // to interactWithKeyboard().
-        //
-        // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
-        // that works for many different input types.
+        input = input.toUpperCase();
 
-        TETile[][] finalWorldFrame = null;
-        return finalWorldFrame;
+        int start = input.indexOf('N') + 1;
+        int end = input.indexOf('S');
+
+        String seedText = input.substring(start, end);
+        long seed = Long.parseLong(seedText);
+
+        Random random = new Random(seed);
+
+        ter.initialize(WIDTH, HEIGHT);
+
+        world = new TETile[WIDTH][HEIGHT];
+        ArrayList<Room> rooms = new ArrayList<>();
+        WorldGenerator generator = new WorldGenerator(world, WIDTH, HEIGHT, random, rooms);
+
+        generator.initialize();
+        generator.generateRandomRooms(random, WIDTH, HEIGHT);
+        generator.drawRoom();
+        generator.connectAllRooms(world, generator.getRooms());
+        generator.addWalls(world);
+
+        ter.renderFrame(world);
+
+        return world;
+    }
+
+    @Override
+    public String toString() {
+        return TETile.toString(world);
     }
 }
