@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class Engine {
-    TERenderer ter = new TERenderer();
     private TETile[][] world;
     /* Feel free to change the width and height. */
     public static final int WIDTH = 80;
@@ -52,8 +51,6 @@ public class Engine {
 
         Random random = new Random(seed);
 
-        ter.initialize(WIDTH, HEIGHT);
-
         world = new TETile[WIDTH][HEIGHT];
         ArrayList<Room> rooms = new ArrayList<>();
         WorldGenerator generator = new WorldGenerator(world, WIDTH, HEIGHT, random, rooms);
@@ -64,13 +61,20 @@ public class Engine {
         generator.connectAllRooms(world, generator.getRooms());
         generator.addWalls(world);
 
-        ter.renderFrame(world);
-
         return world;
     }
 
     @Override
     public String toString() {
         return TETile.toString(world);
+    }
+
+    public static void main(String[] args) {
+        Engine engine = new Engine();
+        TETile[][] world = engine.interactWithInputString("N12345S");
+
+        TERenderer ter = new TERenderer();
+        ter.initialize(WIDTH, HEIGHT);
+        ter.renderFrame(world);
     }
 }

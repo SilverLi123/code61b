@@ -126,13 +126,13 @@ public class WorldGenerator {
         int width = world.length;
         int height = world[0].length;
 
-        int[] dx = {-1, 1, 0, 0};
-        int[] dy = {0, 0, -1, 1};
+        int[] dx = {-1, 1, 0, 0, -1, -1, 1, 1};
+        int[] dy = {0, 0, -1, 1, -1, 1, -1, 1};
 
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 if (world[i][j].equals(Tileset.NOTHING)) {
-                    for (int p = 0; p < 4; p++) {
+                    for (int p = 0; p < 8; p++) {
                         int nx = i + dx[p];
                         int ny = j + dy[p];
                         if (nx < 0 || nx >= width || ny < 0 || ny >= height) {
