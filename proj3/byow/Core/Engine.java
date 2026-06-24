@@ -60,6 +60,14 @@ public class Engine {
         generator.drawRoom();
         generator.connectAllRooms(world, generator.getRooms());
         generator.addWalls(world);
+        Avatar avatar = generator.placeAvatar(rooms, world);
+
+        GameState game = new GameState(world, avatar);
+
+        for (int i = end + 1; i < input.length(); i++) {
+            char c = input.charAt(i);
+            handleKey(c, game);
+        }
 
         return world;
     }
@@ -71,10 +79,25 @@ public class Engine {
 
     public static void main(String[] args) {
         Engine engine = new Engine();
-        TETile[][] world = engine.interactWithInputString("N12345S");
+        TETile[][] world = engine.interactWithInputString("N12345SWWW");
 
         TERenderer ter = new TERenderer();
         ter.initialize(WIDTH, HEIGHT);
         ter.renderFrame(world);
+    }
+
+    private void handleKey(char c, GameState game) {
+        if (c == 'W') {
+            game.moveAvatar(0, 1);
+        }
+        else if (c == 'S') {
+            game.moveAvatar(0, -1);
+        }
+        else if (c == 'A') {
+            game.moveAvatar(-1, 0);
+        }
+        else if (c == 'D') {
+            game.moveAvatar(1, 0);
+        }
     }
 }

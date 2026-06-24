@@ -12,6 +12,7 @@ public class WorldGenerator {
     private int height;
     private Random random;
     private ArrayList<Room> rooms;
+    private Avatar avatar;
 
     public WorldGenerator(TETile[][] world, int width, int height, Random random, ArrayList<Room> rooms) {
         this.world = world;
@@ -147,5 +148,17 @@ public class WorldGenerator {
                 }
             }
         }
+    }
+
+    public Avatar placeAvatar(ArrayList<Room> rooms, TETile[][] world) {
+        Room room = rooms.get(0);
+
+        int x = room.centerX();
+        int y = room.centerY();
+
+        avatar = new Avatar(x, y);
+        world[x][y] = Tileset.AVATAR;
+
+        return avatar;
     }
 }
