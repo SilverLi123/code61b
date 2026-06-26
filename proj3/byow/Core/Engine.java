@@ -3,14 +3,20 @@ package byow.Core;
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Scanner;
 
 public class Engine {
     private TETile[][] world;
     /* Feel free to change the width and height. */
     public static final int WIDTH = 80;
     public static final int HEIGHT = 40;
+    private String inputHistory;
 
     /**
      * Method used for exploring a fresh world. This method should handle all inputs,
@@ -42,12 +48,21 @@ public class Engine {
      */
     public TETile[][] interactWithInputString(String input) {
         input = input.toUpperCase();
+        String preInput = "";
+        String fullinput = "";
 
-        int start = input.indexOf('N') + 1;
-        int end = input.indexOf('S');
+        if (input.charAt(0) == 'L') {
+            preInput = loadGame();
+        }
 
-        String seedText = input.substring(start, end);
+        fullinput = preInput + input;
+
+        int start = fullinput.indexOf('N') + 1;
+        int end = fullinput.indexOf('S');
+
+        String seedText = fullinput.substring(start, end);
         long seed = Long.parseLong(seedText);
+        inputHistory = fullinput.substring(0, end + 1);
 
         Random random = new Random(seed);
 
@@ -64,9 +79,15 @@ public class Engine {
 
         GameState game = new GameState(world, avatar);
 
-        for (int i = end + 1; i < input.length(); i++) {
-            char c = input.charAt(i);
+        for (int i = end + 1; i < fullinput.length(); i++) {
+            char c = fullinput.charAt(i);
+
+            if (c == ':' && fullinput.charAt(i + 1) == 'Q') {
+                saveGame();
+                break;
+            }
             handleKey(c, game);
+            inputHistory += c;
         }
 
         return world;
@@ -78,12 +99,19 @@ public class Engine {
     }
 
     public static void main(String[] args) {
-        Engine engine = new Engine();
-        TETile[][] world = engine.interactWithInputString("N12345SWWW");
+        Engine e1 = new Engine();
+        TETile[][] world1 = e1.interactWithInputString("N123SWWAA");
 
-        TERenderer ter = new TERenderer();
-        ter.initialize(WIDTH, HEIGHT);
-        ter.renderFrame(world);
+        Engine e2 = new Engine();
+        e2.interactWithInputString("N123SWW:Q");
+
+        Engine e3 = new Engine();
+        TETile[][] world2 = e3.interactWithInputString("LAA");
+
+        String s1 = TETile.toString(world1);
+        String s2 = TETile.toString(world2);
+
+        System.out.println(s1.equals(s2));
     }
 
     private void handleKey(char c, GameState game) {
@@ -98,6 +126,35 @@ public class Engine {
         }
         else if (c == 'D') {
             game.moveAvatar(1, 0);
+        }
+    }
+
+    public void saveGame() {
+        try {
+            FileWriter writer = new FileWriter("savefile.txt");
+            writer.write(inputHistory);
+            writer.close();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String loadGame() {
+        try {
+            File file = new File("savefile.txt");
+            Scanner scanner = new Scanner(file);
+            String saveInput = "";
+
+            if (scanner.hasNextLine()) {
+                saveInput = scanner.nextLine();
+            }
+
+            scanner.close();
+            return saveInput;
+        }
+        catch (FileNotFoundException e) {
+            return "";
         }
     }
 }

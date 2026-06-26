@@ -29,4 +29,6 @@ public class GameState {
     private boolean isRange(int x, int y) {
         return x >= 0 && y >= 0 && x < world.length && y < world[0].length;
     }
+
+
 }
