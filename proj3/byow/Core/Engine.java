@@ -1,7 +1,10 @@
 package byow.Core;
 
+import byow.InputDemo.InputSource;
+import byow.InputDemo.KeyboardInputSource;
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
+import edu.princeton.cs.introcs.StdDraw;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -17,12 +20,52 @@ public class Engine {
     public static final int WIDTH = 80;
     public static final int HEIGHT = 40;
     private String inputHistory;
+    private GameState game;
+    private boolean waitingForQ = false;
 
     /**
      * Method used for exploring a fresh world. This method should handle all inputs,
      * including inputs from the main menu.
      */
     public void interactWithKeyboard() {
+        TERenderer ter = new TERenderer();
+        ter.initialize(WIDTH, HEIGHT);
+
+        GameUI drawer = new GameUI(WIDTH, HEIGHT);
+        drawer.drawMainMenu();
+
+        while (true) {
+            if (StdDraw.hasNextKeyTyped()) {
+                char c = Character.toUpperCase(StdDraw.nextKeyTyped());
+
+                if (c == 'N') {
+                    String seedtext = readSeedInput(drawer);
+                    long seed = Long.parseLong(seedtext);
+
+                    game = startNewGame(seed);
+                    inputHistory = 'N' + seedtext + 'S';
+
+                    ter.renderFrame(world);
+                    break;
+                }
+                else if (c == 'L') {
+                    String pretext = loadGame();
+
+                    if (pretext == "") {
+                        System.exit(0);
+                    }
+
+                    interactWithInputString(pretext);
+                    ter.renderFrame(world);
+
+                    break;
+                }
+                else if (c == 'Q') {
+                    saveGame();
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -55,7 +98,7 @@ public class Engine {
             preInput = loadGame();
         }
 
-        fullinput = preInput + input;
+        fullinput = preInput + input.substring(1);
 
         int start = fullinput.indexOf('N') + 1;
         int end = fullinput.indexOf('S');
@@ -64,30 +107,16 @@ public class Engine {
         long seed = Long.parseLong(seedText);
         inputHistory = fullinput.substring(0, end + 1);
 
-        Random random = new Random(seed);
-
-        world = new TETile[WIDTH][HEIGHT];
-        ArrayList<Room> rooms = new ArrayList<>();
-        WorldGenerator generator = new WorldGenerator(world, WIDTH, HEIGHT, random, rooms);
-
-        generator.initialize();
-        generator.generateRandomRooms(random, WIDTH, HEIGHT);
-        generator.drawRoom();
-        generator.connectAllRooms(world, generator.getRooms());
-        generator.addWalls(world);
-        Avatar avatar = generator.placeAvatar(rooms, world);
-
-        GameState game = new GameState(world, avatar);
+        game = startNewGame(seed);
 
         for (int i = end + 1; i < fullinput.length(); i++) {
             char c = fullinput.charAt(i);
 
-            if (c == ':' && fullinput.charAt(i + 1) == 'Q') {
-                saveGame();
+            boolean shouldQuit = handleGameKey(c);
+
+            if (shouldQuit) {
                 break;
             }
-            handleKey(c, game);
-            inputHistory += c;
         }
 
         return world;
@@ -99,34 +128,44 @@ public class Engine {
     }
 
     public static void main(String[] args) {
-        Engine e1 = new Engine();
-        TETile[][] world1 = e1.interactWithInputString("N123SWWAA");
-
-        Engine e2 = new Engine();
-        e2.interactWithInputString("N123SWW:Q");
-
-        Engine e3 = new Engine();
-        TETile[][] world2 = e3.interactWithInputString("LAA");
-
-        String s1 = TETile.toString(world1);
-        String s2 = TETile.toString(world2);
-
-        System.out.println(s1.equals(s2));
+        Engine engine = new Engine();
+        engine.interactWithKeyboard();
     }
 
-    private void handleKey(char c, GameState game) {
+    private boolean handleGameKey(char c) {
+        c = Character.toUpperCase(c);
+
+        if (waitingForQ) {
+            waitingForQ = false;
+
+            if (c == 'Q') {
+                saveGame();
+                return true;
+            }
+
+            return false;
+        }
+
+        if (c == ':') {
+            waitingForQ = true;
+            return false;
+        }
+
         if (c == 'W') {
             game.moveAvatar(0, 1);
-        }
-        else if (c == 'S') {
+            inputHistory += c;
+        } else if (c == 'S') {
             game.moveAvatar(0, -1);
-        }
-        else if (c == 'A') {
+            inputHistory += c;
+        } else if (c == 'A') {
             game.moveAvatar(-1, 0);
-        }
-        else if (c == 'D') {
+            inputHistory += c;
+        } else if (c == 'D') {
             game.moveAvatar(1, 0);
+            inputHistory += c;
         }
+
+        return false;
     }
 
     public void saveGame() {
@@ -155,6 +194,45 @@ public class Engine {
         }
         catch (FileNotFoundException e) {
             return "";
+        }
+    }
+
+    public GameState startNewGame(long seed) {
+        Random random = new Random(seed);
+
+        world = new TETile[WIDTH][HEIGHT];
+        ArrayList<Room> rooms = new ArrayList<>();
+        WorldGenerator generator = new WorldGenerator(world, WIDTH, HEIGHT, random, rooms);
+
+        generator.initialize();
+        generator.generateRandomRooms(random, WIDTH, HEIGHT);
+        generator.drawRoom();
+        generator.connectAllRooms(world, generator.getRooms());
+        generator.addWalls(world);
+        Avatar avatar = generator.placeAvatar(rooms, world);
+
+        GameState game = new GameState(world, avatar);
+
+        return game;
+    }
+
+    private String readSeedInput(GameUI drawer) {
+        String seedText = "";
+        drawer.drawSeedInput(seedText);
+
+        while (true) {
+            if (StdDraw.hasNextKeyTyped()) {
+                char c = Character.toUpperCase(StdDraw.nextKeyTyped());
+
+                if (Character.isDigit(c)) {
+                    seedText += c;
+                    drawer.drawSeedInput(seedText);
+                } else if (c == 'S' && seedText.length() > 0) {
+                    return seedText;
+                }
+            }
+
+            StdDraw.pause(20);
         }
     }
 }
