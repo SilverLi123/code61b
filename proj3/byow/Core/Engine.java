@@ -46,17 +46,19 @@ public class Engine {
                     inputHistory = 'N' + seedtext + 'S';
 
                     ter.renderFrame(world);
+                    playGameloop(ter);
                     break;
                 }
                 else if (c == 'L') {
                     String pretext = loadGame();
 
-                    if (pretext == "") {
+                    if (pretext.isEmpty()) {
                         System.exit(0);
                     }
 
                     interactWithInputString(pretext);
                     ter.renderFrame(world);
+                    playGameloop(ter);
 
                     break;
                 }
@@ -93,12 +95,19 @@ public class Engine {
         input = input.toUpperCase();
         String preInput = "";
         String fullinput = "";
+        TERenderer ter = new TERenderer();
+        ter.initialize(WIDTH, HEIGHT);
 
         if (input.charAt(0) == 'L') {
             preInput = loadGame();
         }
 
-        fullinput = preInput + input.substring(1);
+        if (input.charAt(0) == 'L') {
+            fullinput = preInput + input.substring(1);
+        }
+        else {
+            fullinput = preInput + input;
+        }
 
         int start = fullinput.indexOf('N') + 1;
         int end = fullinput.indexOf('S');
@@ -113,6 +122,7 @@ public class Engine {
             char c = fullinput.charAt(i);
 
             boolean shouldQuit = handleGameKey(c);
+            ter.renderFrame(world);
 
             if (shouldQuit) {
                 break;
@@ -129,7 +139,7 @@ public class Engine {
 
     public static void main(String[] args) {
         Engine engine = new Engine();
-        engine.interactWithKeyboard();
+        engine.interactWithInputString("N12345Swaswadawsawsd");
     }
 
     private boolean handleGameKey(char c) {
@@ -230,6 +240,24 @@ public class Engine {
                 } else if (c == 'S' && seedText.length() > 0) {
                     return seedText;
                 }
+            }
+
+            StdDraw.pause(20);
+        }
+    }
+
+    private void playGameloop(TERenderer ter) {
+        while (true) {
+            ter.renderFrame(world);
+
+            if (StdDraw.hasNextKeyTyped()) {
+                char c = Character.toUpperCase(StdDraw.nextKeyTyped());
+                boolean shouldQuit = handleGameKey(c);
+
+                if (shouldQuit) {
+                    System.exit(0);
+                }
+
             }
 
             StdDraw.pause(20);
