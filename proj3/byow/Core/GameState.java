@@ -19,7 +19,7 @@ public class GameState {
         int newX = oldX + dx;
         int newY = oldY + dy;
 
-        if (world[newX][newY].equals(Tileset.FLOOR) && isRange(newX, newY)) {
+        if (isRange(newX, newY) && world[newX][newY].equals(Tileset.FLOOR)) {
             world[oldX][oldY] = Tileset.FLOOR;
             world[newX][newY] = Tileset.AVATAR;
             avatar.move(newX, newY);

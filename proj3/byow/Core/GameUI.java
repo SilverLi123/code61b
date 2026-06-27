@@ -42,4 +42,24 @@ public class GameUI {
 
         StdDraw.show();
     }
+
+    public void drawHUD(TETile[][] world) {
+        int mouseX = (int) StdDraw.mouseX();
+        int mouseY = (int) StdDraw.mouseY();
+
+        String description = "";
+
+        if (mouseX >= 0 && mouseX < world.length
+                && mouseY >= 0 && mouseY < world[0].length) {
+            description = world[mouseX][mouseY].description();
+        }
+
+        StdDraw.setPenColor(Color.WHITE);
+        StdDraw.setFont(new Font("Monaco", Font.PLAIN, 14));
+
+        StdDraw.textLeft(1, height + 1, "Tile: " + description);
+        StdDraw.textRight(width - 1, height + 1, ":Q Save & Quit");
+
+        StdDraw.show();
+    }
 }

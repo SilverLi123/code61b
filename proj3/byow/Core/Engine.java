@@ -29,7 +29,7 @@ public class Engine {
      */
     public void interactWithKeyboard() {
         TERenderer ter = new TERenderer();
-        ter.initialize(WIDTH, HEIGHT);
+        ter.initialize(WIDTH, HEIGHT + 2);
 
         GameUI drawer = new GameUI(WIDTH, HEIGHT);
         drawer.drawMainMenu();
@@ -46,7 +46,7 @@ public class Engine {
                     inputHistory = 'N' + seedtext + 'S';
 
                     ter.renderFrame(world);
-                    playGameloop(ter);
+                    playGameloop(ter, drawer);
                     break;
                 }
                 else if (c == 'L') {
@@ -58,13 +58,12 @@ public class Engine {
 
                     interactWithInputString(pretext);
                     ter.renderFrame(world);
-                    playGameloop(ter);
+                    playGameloop(ter, drawer);
 
                     break;
                 }
                 else if (c == 'Q') {
-                    saveGame();
-                    break;
+                    System.exit(0);
                 }
             }
         }
@@ -95,8 +94,6 @@ public class Engine {
         input = input.toUpperCase();
         String preInput = "";
         String fullinput = "";
-        TERenderer ter = new TERenderer();
-        ter.initialize(WIDTH, HEIGHT);
 
         if (input.charAt(0) == 'L') {
             preInput = loadGame();
@@ -122,7 +119,6 @@ public class Engine {
             char c = fullinput.charAt(i);
 
             boolean shouldQuit = handleGameKey(c);
-            ter.renderFrame(world);
 
             if (shouldQuit) {
                 break;
@@ -139,7 +135,7 @@ public class Engine {
 
     public static void main(String[] args) {
         Engine engine = new Engine();
-        engine.interactWithInputString("N12345Swaswadawsawsd");
+        engine.interactWithKeyboard();
     }
 
     private boolean handleGameKey(char c) {
@@ -246,9 +242,11 @@ public class Engine {
         }
     }
 
-    private void playGameloop(TERenderer ter) {
+    private void playGameloop(TERenderer ter, GameUI drawer) {
         while (true) {
             ter.renderFrame(world);
+            drawer.drawHUD(world);
+
 
             if (StdDraw.hasNextKeyTyped()) {
                 char c = Character.toUpperCase(StdDraw.nextKeyTyped());
